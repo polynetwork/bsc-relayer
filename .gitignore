@@ -2,3 +2,4 @@
 config.json
 wallet.dat
 log/*.log
+db/bolt.bin

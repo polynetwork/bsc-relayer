@@ -132,7 +132,7 @@ func initPolyServer(servConfig *config.ServiceConfig, polysdk *sdk.PolySdk, ethe
 }
 
 func initBSCServer(servConfig *config.ServiceConfig, polysdk *sdk.PolySdk, ethereumsdk *ethclient.Client, boltDB *db.BoltDB) {
-	mgr, err := manager.NewEthereumManager(servConfig, StartHeight, StartForceHeight, polysdk, ethereumsdk, boltDB)
+	mgr, err := manager.NewBSCManager(servConfig, StartHeight, StartForceHeight, polysdk, ethereumsdk, boltDB)
 	if err != nil {
 		log.Error("initBSCServer - bsc service start err: %s", err.Error())
 		return

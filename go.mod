@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/boltdb/bolt v1.3.1
 	github.com/btcsuite/btcd v0.20.1-beta
-	github.com/ethereum/go-ethereum v1.9.13
+	github.com/ethereum/go-ethereum v1.9.15
 	github.com/ontio/ontology v1.12.0
 	github.com/ontio/ontology-crypto v1.0.9
 	github.com/polynetwork/eth-contracts v0.0.0-20200903021827-c9212e419943
