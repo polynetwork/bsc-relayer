@@ -117,7 +117,7 @@ func NewBSCManager(servconfig *config.ServiceConfig, startheight uint64, startfo
 	} else {
 		wallet, err = ontsdk.OpenWallet(servconfig.PolyConfig.WalletFile)
 		if err != nil {
-			log.Errorf("NewETHManager - wallet open error: %s", err.Error())
+			log.Errorf("NewBSCManager - wallet open error: %s", err.Error())
 			return nil, err
 		}
 	}
@@ -125,7 +125,7 @@ func NewBSCManager(servconfig *config.ServiceConfig, startheight uint64, startfo
 	if err != nil || signer == nil {
 		signer, err = wallet.NewDefaultSettingAccount([]byte(servconfig.PolyConfig.WalletPwd))
 		if err != nil {
-			log.Errorf("NewETHManager - wallet password error")
+			log.Errorf("NewBSCManager - wallet password error")
 			return nil, err
 		}
 
@@ -134,7 +134,7 @@ func NewBSCManager(servconfig *config.ServiceConfig, startheight uint64, startfo
 			return nil, err
 		}
 	}
-	log.Infof("NewETHManager - poly address: %s", signer.Address.ToBase58())
+	log.Infof("NewBSCManager - poly address: %s", signer.Address.ToBase58())
 
 	mgr := &BSCManager{
 		config:        servconfig,
@@ -171,8 +171,9 @@ func (this *BSCManager) MonitorChain() {
 			if height-this.currentHeight <= config.BSC_USEFUL_BLOCK_NUM {
 				continue
 			}
-			log.Infof("MonitorChain - eth height is %d", height)
+			log.Infof("MonitorChain - bsc height-currentHeight=%d-%d=%d", height, this.currentHeight, height-this.currentHeight)
 			blockHandleResult = true
+
 			for this.currentHeight < height-config.BSC_USEFUL_BLOCK_NUM {
 				blockHandleResult = this.handleNewBlock(this.currentHeight + 1)
 				if blockHandleResult == false {
@@ -206,7 +207,7 @@ func (this *BSCManager) init() error {
 	} else {
 		this.currentHeight = latestHeight
 	}
-	log.Infof("EthereumManager init - start height: %d", this.currentHeight)
+	log.Infof("BSCManager init - start height: %d", this.currentHeight)
 	return nil
 }
 
@@ -324,6 +325,7 @@ func (this *BSCManager) fetchLockDepositEvents(height uint64, client *ethclient.
 		}
 		sink := common.NewZeroCopySink(nil)
 		crossTx.Serialization(sink)
+
 		err = this.db.PutRetry(sink.Bytes())
 		if err != nil {
 			log.Errorf("fetchLockDepositEvents - this.db.PutRetry error: %s", err)
@@ -397,16 +399,15 @@ func (this *BSCManager) MonitorDeposit() {
 				continue
 			}
 			snycheight := this.findLastestHeight()
-			if snycheight > height-config.BSC_PROOF_USERFUL_BLOCK {
-				// try to handle deposit event when we are at latest height
-				this.handleLockDepositEvents(snycheight)
-			}
+			fmt.Println("snycheight", snycheight, "height", height, "diff", height-snycheight)
+			this.handleLockDepositEvents(snycheight)
 		case <-this.exitChan:
 			return
 		}
 	}
 }
 func (this *BSCManager) handleLockDepositEvents(refHeight uint64) error {
+
 	retryList, err := this.db.GetAllRetry()
 	if err != nil {
 		return fmt.Errorf("handleLockDepositEvents - this.db.GetAllRetry error: %s", err)
@@ -445,11 +446,11 @@ func (this *BSCManager) handleLockDepositEvents(refHeight uint64) error {
 				log.Infof("handleLockDepositEvents - invokeNativeContract error: %s", err)
 				continue
 			} else {
-				if err := this.db.DeleteRetry(v); err != nil {
-					log.Errorf("handleLockDepositEvents - this.db.DeleteRetry error: %s", err)
-				}
 				if strings.Contains(err.Error(), "tx already done") {
 					log.Debugf("handleLockDepositEvents - eth_tx %s already on poly", ethcommon.BytesToHash(crosstx.txId).String())
+					if err := this.db.DeleteRetry(v); err != nil {
+						log.Errorf("handleLockDepositEvents - this.db.DeleteRetry error: %s", err)
+					}
 				} else {
 					log.Errorf("handleLockDepositEvents - invokeNativeContract error for eth_tx %s: %s", ethcommon.BytesToHash(crosstx.txId).String(), err)
 				}

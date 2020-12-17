@@ -31,8 +31,7 @@ const (
 	BSC_MONITOR_INTERVAL = time.Second
 	ONT_MONITOR_INTERVAL = time.Second
 
-	BSC_USEFUL_BLOCK_NUM     = 15
-	BSC_PROOF_USERFUL_BLOCK  = 15
+	BSC_USEFUL_BLOCK_NUM     = 3
 	ONT_USEFUL_BLOCK_NUM     = 1
 	DEFAULT_CONFIG_FILE_NAME = "./config.json"
 	Version                  = "1.0"
