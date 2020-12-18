@@ -167,14 +167,14 @@ func (this *PolyManager) MonitorChain() {
 		case <-monitorTicker.C:
 			latestheight, err := this.polySdk.GetCurrentBlockHeight()
 			if err != nil {
-				log.Errorf("MonitorChain - get poly chain block height error: %s", err)
+				log.Errorf("MonitorChain poly - get chain block height error: %s", err)
 				continue
 			}
 			latestheight--
 			if latestheight-this.currentHeight < config.ONT_USEFUL_BLOCK_NUM {
 				continue
 			}
-			log.Infof("MonitorChain - poly chain current height: %d", latestheight)
+			log.Infof("MonitorChain poly - current height: %d", latestheight)
 			blockHandleResult = true
 			for this.currentHeight <= latestheight-config.ONT_USEFUL_BLOCK_NUM {
 				blockHandleResult = this.handleDepositEvents(this.currentHeight)
@@ -184,7 +184,7 @@ func (this *PolyManager) MonitorChain() {
 				this.currentHeight++
 			}
 			if err = this.db.UpdatePolyHeight(this.currentHeight - 1); err != nil {
-				log.Errorf("MonitorChain - failed to save height of poly: %v", err)
+				log.Errorf("MonitorChain poly - failed to save height: %v", err)
 			}
 		case <-this.exitChan:
 			return
