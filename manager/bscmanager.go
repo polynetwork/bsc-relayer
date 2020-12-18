@@ -171,7 +171,7 @@ func (this *BSCManager) MonitorChain() {
 			if height-this.currentHeight <= config.BSC_USEFUL_BLOCK_NUM {
 				continue
 			}
-			log.Infof("MonitorChain - bsc height-currentHeight=%d-%d=%d", height, this.currentHeight, height-this.currentHeight)
+
 			blockHandleResult = true
 
 			for this.currentHeight < height-config.BSC_USEFUL_BLOCK_NUM {
@@ -187,6 +187,10 @@ func (this *BSCManager) MonitorChain() {
 						break
 					}
 				}
+				if int(this.currentHeight)%this.config.BSCConfig.HeadersPerBatch == 0 {
+					log.Infof("MonitorChain bsc: height-currentHeight=%d-%d=%d", height, this.currentHeight, height-this.currentHeight)
+				}
+
 			}
 			if blockHandleResult && len(this.header4sync) > 0 {
 				this.commitHeader()
