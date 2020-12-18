@@ -368,7 +368,7 @@ func (this *BSCManager) commitHeader() int {
 			break
 		}
 	}
-	log.Infof("MonitorChain bsc - commitHeader - send transaction %s to poly chain and confirmed on height %d, synced bsc height %d, bsc height %d, took %s", tx.ToHexString(), h, this.currentHeight, this.height, time.Now().Sub(start).String())
+	log.Infof("MonitorChain bsc - commitHeader - send transaction %s to poly chain and confirmed on height %d, synced bsc height %d, bsc height %d, took %s, header count %d", tx.ToHexString(), h, this.currentHeight, this.height, time.Now().Sub(start).String(), len(this.header4sync))
 	this.header4sync = make([][]byte, 0)
 	return 0
 }
