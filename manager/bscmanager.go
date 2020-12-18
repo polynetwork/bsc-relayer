@@ -96,6 +96,7 @@ type BSCManager struct {
 	restClient     *tools.RestClient
 	client         *ethclient.Client
 	currentHeight  uint64
+	height         uint64
 	forceHeight    uint64
 	lockerContract *bind.BoundContract
 	polySdk        *sdk.PolySdk
@@ -159,22 +160,25 @@ func NewBSCManager(servconfig *config.ServiceConfig, startheight uint64, startfo
 
 func (this *BSCManager) MonitorChain() {
 	fetchBlockTicker := time.NewTicker(config.BSC_MONITOR_INTERVAL)
-	var blockHandleResult bool
+	var (
+		blockHandleResult bool
+		err               error
+	)
 	for {
 		select {
 		case <-fetchBlockTicker.C:
-			height, err := tools.GetNodeHeight(this.config.BSCConfig.RestURL, this.restClient)
+			this.height, err = tools.GetNodeHeight(this.config.BSCConfig.RestURL, this.restClient)
 			if err != nil {
 				log.Infof("MonitorChain bsc - cannot get node height, err: %s", err)
 				continue
 			}
-			if height-this.currentHeight <= config.BSC_USEFUL_BLOCK_NUM {
+			if this.height-this.currentHeight <= config.BSC_USEFUL_BLOCK_NUM {
 				continue
 			}
 
 			blockHandleResult = true
 
-			for this.currentHeight < height-config.BSC_USEFUL_BLOCK_NUM {
+			for this.currentHeight < this.height-config.BSC_USEFUL_BLOCK_NUM {
 				blockHandleResult = this.handleNewBlock(this.currentHeight + 1)
 				if blockHandleResult == false {
 					break
@@ -186,9 +190,6 @@ func (this *BSCManager) MonitorChain() {
 						blockHandleResult = false
 						break
 					}
-				}
-				if int(this.currentHeight)%this.config.BSCConfig.HeadersPerBatch == 0 {
-					log.Infof("MonitorChain bsc - (bsc height-synced bsc height)=%d-%d=%d", height, this.currentHeight, height-this.currentHeight)
 				}
 
 			}
@@ -367,7 +368,7 @@ func (this *BSCManager) commitHeader() int {
 			break
 		}
 	}
-	log.Infof("MonitorChain bsc - commitHeader - send transaction %s to poly chain and confirmed on height %d, synced bsc height %d, took %s", tx.ToHexString(), h, this.currentHeight, time.Now().Sub(start).String())
+	log.Infof("MonitorChain bsc - commitHeader - send transaction %s to poly chain and confirmed on height %d, synced bsc height %d, bsc height %d, took %s", tx.ToHexString(), h, this.currentHeight, this.height, time.Now().Sub(start).String())
 	this.header4sync = make([][]byte, 0)
 	return 0
 }
@@ -404,7 +405,7 @@ func (this *BSCManager) MonitorDeposit() {
 				continue
 			}
 			snycheight := this.findLastestHeight()
-			fmt.Println("MonitorDeposit bsc - snyced bsc height", snycheight, "bsc height", height, "diff", height-snycheight)
+			log.Log.Info("MonitorDeposit bsc - snyced bsc height", snycheight, "bsc height", height, "diff", height-snycheight)
 			this.handleLockDepositEvents(snycheight)
 		case <-this.exitChan:
 			return
