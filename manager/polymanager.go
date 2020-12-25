@@ -59,14 +59,14 @@ const (
 )
 
 type PolyManager struct {
-	config        *config.ServiceConfig
-	polySdk       *sdk.PolySdk
-	currentHeight uint32
-	contractAbi   *abi.ABI
-	exitChan      chan int
-	db            *db.BoltDB
-	ethClient     *ethclient.Client
-	senders       []*EthSender
+	config       *config.ServiceConfig
+	polySdk      *sdk.PolySdk
+	syncedHeight uint32
+	contractAbi  *abi.ABI
+	exitChan     chan int
+	db           *db.BoltDB
+	ethClient    *ethclient.Client
+	senders      []*EthSender
 }
 
 func NewPolyManager(servCfg *config.ServiceConfig, startblockHeight uint32, polySdk *sdk.PolySdk, ethereumsdk *ethclient.Client, boltDB *db.BoltDB) (*PolyManager, error) {
@@ -112,14 +112,14 @@ func NewPolyManager(servCfg *config.ServiceConfig, startblockHeight uint32, poly
 		senders[i] = v
 	}
 	return &PolyManager{
-		exitChan:      make(chan int),
-		config:        servCfg,
-		polySdk:       polySdk,
-		currentHeight: startblockHeight,
-		contractAbi:   &contractabi,
-		db:            boltDB,
-		ethClient:     ethereumsdk,
-		senders:       senders,
+		exitChan:     make(chan int),
+		config:       servCfg,
+		polySdk:      polySdk,
+		syncedHeight: startblockHeight,
+		contractAbi:  &contractabi,
+		db:           boltDB,
+		ethClient:    ethereumsdk,
+		senders:      senders,
 	}, nil
 }
 
@@ -139,18 +139,18 @@ func (this *PolyManager) findLatestHeight() uint32 {
 }
 
 func (this *PolyManager) init() bool {
-	if this.currentHeight > 0 {
-		log.Infof("PolyManager init - start height from flag: %d", this.currentHeight)
+	if this.syncedHeight > 0 {
+		log.Infof("PolyManager init - start height from flag: %d", this.syncedHeight)
 		return true
 	}
-	this.currentHeight = this.db.GetPolyHeight()
+	this.syncedHeight = this.db.GetPolyHeight()
 	latestHeight := this.findLatestHeight()
-	if latestHeight > this.currentHeight {
-		this.currentHeight = latestHeight
-		log.Infof("PolyManager init - latest height from ECCM: %d", this.currentHeight)
+	if latestHeight > this.syncedHeight {
+		this.syncedHeight = latestHeight
+		log.Infof("PolyManager init - synced height from ECCM: %d", this.syncedHeight)
 		return true
 	}
-	log.Infof("PolyManager init - latest height from DB: %d", this.currentHeight)
+	log.Infof("PolyManager init - synced height from DB: %d", this.syncedHeight)
 
 	return true
 }
@@ -171,19 +171,19 @@ func (this *PolyManager) MonitorChain() {
 				continue
 			}
 			latestheight--
-			if latestheight-this.currentHeight < config.ONT_USEFUL_BLOCK_NUM {
+			if latestheight-this.syncedHeight < config.ONT_USEFUL_BLOCK_NUM {
 				continue
 			}
-			log.Infof("MonitorChain poly - current height: %d", latestheight)
+			log.Infof("MonitorChain poly - latest height: %d, synced height: %d", latestheight, this.syncedHeight)
 			blockHandleResult = true
-			for this.currentHeight <= latestheight-config.ONT_USEFUL_BLOCK_NUM {
-				blockHandleResult = this.handleDepositEvents(this.currentHeight)
+			for this.syncedHeight <= latestheight-config.ONT_USEFUL_BLOCK_NUM {
+				blockHandleResult = this.handleDepositEvents(this.syncedHeight)
 				if blockHandleResult == false {
 					break
 				}
-				this.currentHeight++
+				this.syncedHeight++
 			}
-			if err = this.db.UpdatePolyHeight(this.currentHeight - 1); err != nil {
+			if err = this.db.UpdatePolyHeight(this.syncedHeight - 1); err != nil {
 				log.Errorf("MonitorChain poly - failed to save height: %v", err)
 			}
 		case <-this.exitChan:
