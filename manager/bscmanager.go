@@ -189,7 +189,7 @@ func (this *BSCManager) MonitorChain() {
 				this.currentHeight++
 				// try to commit header if more than 50 headers needed to be syned
 				if len(this.header4sync) >= this.config.BSCConfig.HeadersPerBatch {
-					log.Infof("MonitorChain before commitHeader %d")
+					log.Infof("MonitorChain before commitHeader")
 					if res := this.commitHeader(); res != 0 {
 						log.Infof("MonitorChain after commitHeader res %d", res)
 						blockHandleResult = false
