@@ -348,12 +348,14 @@ func (this *BSCManager) fetchLockDepositEvents(height uint64, client *ethclient.
 
 func (this *BSCManager) commitHeader() int {
 	start := time.Now()
+	log.Infof("MonitorChain before SyncBlockHeader")
 	tx, err := this.polySdk.Native.Hs.SyncBlockHeader(
 		this.config.BSCConfig.SideChainId,
 		this.polySigner.Address,
 		this.header4sync,
 		this.polySigner,
 	)
+	log.Infof("MonitorChain after SyncBlockHeader")
 	if err != nil {
 		errDesc := err.Error()
 		if strings.Contains(errDesc, "get the parent block failed") || strings.Contains(errDesc, "missing required field") {
