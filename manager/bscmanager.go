@@ -372,7 +372,7 @@ func (this *BSCManager) commitHeader() int {
 	for range tick.C {
 		h, _ = this.polySdk.GetBlockHeightByTxHash(tx.ToHexString())
 		curr, _ := this.polySdk.GetCurrentBlockHeight()
-		log.Infof("MonitorChain GetBlockHeightByTxHash h:%d curr:%d", h, curr)
+		log.Infof("MonitorChain GetBlockHeightByTxHash h:%d curr:%d waited:%v", h, curr, time.Now().Sub(start))
 		if h > 0 && curr > h {
 			break
 		}
