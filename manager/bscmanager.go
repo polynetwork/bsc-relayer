@@ -167,11 +167,13 @@ func (this *BSCManager) MonitorChain() {
 	for {
 		select {
 		case <-fetchBlockTicker.C:
+			log.Infof("MonitorChain before GetNodeHeight")
 			this.height, err = tools.GetNodeHeight(this.config.BSCConfig.RestURL, this.restClient)
 			if err != nil {
 				log.Infof("MonitorChain bsc - cannot get node height, err: %s", err)
 				continue
 			}
+			log.Infof("MonitorChain after GetNodeHeight")
 			if this.height-this.currentHeight <= config.BSC_USEFUL_BLOCK_NUM {
 				continue
 			}
@@ -179,6 +181,7 @@ func (this *BSCManager) MonitorChain() {
 			blockHandleResult = true
 
 			for this.currentHeight < this.height-config.BSC_USEFUL_BLOCK_NUM {
+				log.Infof("MonitorChain handleNewBlock %d", this.currentHeight+1)
 				blockHandleResult = this.handleNewBlock(this.currentHeight + 1)
 				if blockHandleResult == false {
 					break
@@ -186,10 +189,13 @@ func (this *BSCManager) MonitorChain() {
 				this.currentHeight++
 				// try to commit header if more than 50 headers needed to be syned
 				if len(this.header4sync) >= this.config.BSCConfig.HeadersPerBatch {
+					log.Infof("MonitorChain before commitHeader %d")
 					if res := this.commitHeader(); res != 0 {
+						log.Infof("MonitorChain after commitHeader res %d", res)
 						blockHandleResult = false
 						break
 					}
+					log.Infof("MonitorChain after commitHeader res %d", res)
 				}
 
 			}
