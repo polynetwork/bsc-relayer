@@ -195,7 +195,7 @@ func (this *BSCManager) MonitorChain() {
 						blockHandleResult = false
 						break
 					}
-					log.Infof("MonitorChain after commitHeader res %d", res)
+					log.Infof("MonitorChain after commitHeader")
 				}
 
 			}
